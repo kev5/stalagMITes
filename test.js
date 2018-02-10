@@ -9,3 +9,7 @@ var container = document.getElementById('visualization');
             ];
             var options = {};
             var timeline = new vis.Timeline(container, data, options);
+
+
+var dataFile = document.getElementById('data');
+dataFile.
