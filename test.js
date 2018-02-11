@@ -1,43 +1,20 @@
-
-var nodeIds, shadowState, nodesArray, nodes, edgesArray, edges, network;
+var nodesSet, nodesArray, nodesDataSet, edgesArray, edgesDataSet, network, nx_graph;
 var container = document.getElementById('visualization');
+var colormap = chroma.scale(['green', 'yellow', 'red']);
+var DEFAULT_NODE_COLOR = 'black';
 
 function getIconFromName(n) {
     if (n.startsWith('Part')) {return '\uf0ad'}
     if (n.startsWith('Manuf')) {return '\uf275'}
     if (n.startsWith('Dist')) {return '\uf06b'}
     if (n.startsWith('Retail')) {return '\uf07a'}
-    if (n.startsWith('Transp')) {return '\uf0d1'}
+    if (n.startsWith('Trans')) {return '\uf0d1'}
 }
 
-function startNetwork() {
-    // this list is kept to remove a random node.. we do not add node 1 here because it's used for changes
-    nodeIds = [2, 3, 4, 5];
-    shadowState = false;
-    // create an array with nodes
-    nodesArray = [
-        {id: 1, label: 'Node 1'},
-        {id: 2, label: 'Node 2'},
-        {id: 3, label: 'Node 3'},
-        {id: 4, label: 'Node 4'},
-        {id: 5, label: 'Node 5'}
-    ];
-    nodes = new vis.DataSet(nodesArray);
-    // create an array with edges
-    edgesArray = [
-        {from: 1, to: 3},
-        {from: 1, to: 2},
-        {from: 2, to: 4},
-        {from: 2, to: 5}
-    ];
-    edges = new vis.DataSet(edgesArray);
-    // create a network
-    var data = {
-        nodes: nodes,
-        edges: edges
-    };
-    var options = {};
-    network = new vis.Network(container, data, options);
+function rgba2str(rgba) {
+    rgba = rgba['_rgb'];
+    var res =  'rgba(' + rgba[0] + ',' + rgba[1] + ',' + rgba[2] + ',' + rgba[3] + ')';
+    return res;
 }
 
 // function addNode() {
@@ -69,47 +46,80 @@ function startNetwork() {
 //     nodes.add(nodesArray);
 //     edges.add(edgesArray);
 // }
+//
+// function resetAllNodesStabilize() {
+//     resetAllNodes();
+//     network.stabilize();
+// }
+//
+// function setTheData() {
+//     nodes = new vis.DataSet(nodesArray);
+//     edges = new vis.DataSet(edgesArray);
+//     network.setData({nodes:nodes, edges:edges})
+// }
+//
+// function resetAll() {
+//     if (network !== null) {
+//         network.destroy();
+//         network = null;
+//     }
+//     startNetwork();
+// }
 
-function resetAllNodesStabilize() {
-    resetAllNodes();
-    network.stabilize();
+function colorByDegree() {
+    var degrees = nx_graph.degree()._stringValues;
+    var maxDegree = _.max(Object.values(degrees));
+    nodesSet.forEach(function(n) {
+        nodesDataSet.update({id: n, icon:{color: colormap(degrees[n]/maxDegree)}})
+    })
 }
 
-function setTheData() {
-    nodes = new vis.DataSet(nodesArray);
-    edges = new vis.DataSet(edgesArray);
-    network.setData({nodes:nodes, edges:edges})
-}
-
-function resetAll() {
-    if (network !== null) {
-        network.destroy();
-        network = null;
-    }
-    startNetwork();
-}
-
-
-
-function uniques(array) {
-   return Array.from(new Set(array));
+function removeColors() {
+    nodesSet.forEach(function(n) {
+        nodesDataSet.update({id: n, icon: {color: DEFAULT_NODE_COLOR}})
+    })
 }
 
 function buildNetwork(e) {
-    console.log(e);
     var dataFile = e.target.files[0];
     var reader = new FileReader();
     reader.onload = function(e) {
         var data = e.target.result;
         var workbook = XLSX.read(data, {type : 'binary'});
-        var sheet  = workbook.Sheets['Cereal_LL'];
-        var edges_in_sheet = XLSX.utils.sheet_to_row_object_array(sheet);
+        var edgeSheet  = workbook.Sheets['Cereal_LL'];
+        // var attributeSheet  = workbook.Sheets['Cereal_'];
+        var edgeSheetRows = XLSX.utils.sheet_to_row_object_array(edgeSheet);
 
         nodesSet = new Set();
-        edges_in_sheet.forEach(function(e) {
+        edgeSheetRows.forEach(function(e) {
             nodesSet.add(e['sourceStage']);
             nodesSet.add(e['destinationStage']);
         });
+        edgesArray = edgeSheetRows.map(function(e) {
+            return {
+                from: e['sourceStage'],
+                to: e['destinationStage'],
+                arrows: {
+                    to: true
+                },
+                color: {
+                    color: 'black',
+                    highlight: 'red'
+                }
+            };
+        });
+
+        // BUILD NETWORKX GRAPH
+        nx_graph = new jsnx.DiGraph();
+        nodesSet.forEach(function(n) {
+            nx_graph.addNode(n);
+        });
+        edgesArray.forEach(function(e) {
+            nx_graph.addEdge(e['from'], e['to']);
+        });
+        window.nx_graph = nx_graph;
+
+        // BUILD VIS.JS GRAPH
         nodesArray = [];
         nodesSet.forEach(function(n) {
             nodesArray.push({
@@ -117,23 +127,18 @@ function buildNetwork(e) {
                 label: n,
                 icon: {
                     face: 'FontAwesome',
-                    code: getIconFromName(n)
+                    code: getIconFromName(n),
+                    color: DEFAULT_NODE_COLOR
                 },
                 shape: 'icon'
             })
         });
-        console.log(nodesArray);
-        nodes = new vis.DataSet(Array.from(nodesArray));
+        nodesDataSet = new vis.DataSet(Array.from(nodesArray));
+        edgesDataSet = new vis.DataSet(edgesArray);
 
-        edgesArray = edges_in_sheet.map(function(e) {
-            return {from: e['sourceStage'], to: e['destinationStage'], arrows: {to: true}};
-        });
-
-        console.log(edgesArray);
-        edges = new vis.DataSet(edgesArray);
         var netData = {
-            nodes: nodes,
-            edges: edges
+            nodes: nodesDataSet,
+            edges: edgesDataSet
         };
         var options = {
             layout: {
@@ -143,7 +148,6 @@ function buildNetwork(e) {
                 }
             }
         };
-
         network = new vis.Network(container, netData, options);
     };
     reader.readAsBinaryString(dataFile);
@@ -151,5 +155,5 @@ function buildNetwork(e) {
 
 window.onload = function() {
     document.getElementById('file-input').addEventListener('change', buildNetwork);
-}
+};
 
