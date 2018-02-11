@@ -1,6 +1,7 @@
 var nodesSet, nodesArray, nodesDataSet, edgesArray, edgesDataSet, network, nx_graph, attributeDict;
 var container = document.getElementById('visualization');
 var colormap = chroma.scale(['green', 'yellow', 'red']);
+var MANIPULATION_ENABLED = false;
 var DEFAULT_NODE_COLOR = 'black';
 var DEFAULT_EDGE_COLOR = 'black';
 var HIGHLIGHT_EDGE_COLOR = 'red';
@@ -178,7 +179,7 @@ function initiateShortestPath(metric) {
     // document.getElementById('notifier').innerHTML = 'Choose source'
     var nodes = network.getSelectedNodes();
     deselectNodes();
-    if (nodes.length != 2) {
+    if (nodes.length !== 2) {
         document.getElementById('notifier').innerHTML = 'Must have two nodes selected'
     } else {
         try {
@@ -202,13 +203,19 @@ function initiateShortestPath(metric) {
             }
 
             var shortestPathLength = _.sum(shortestPath.map(function(n) {return nx_graph.node.get(n)[metric]}));
-            document.getElementById('notifier').innerHTML = metric + ' = ' + shortestPathLength.toString();
+            var maybeDollar = metric === 'cost' ? '$' : '';
+            document.getElementById('notifier').innerHTML = metric + ' = ' + maybeDollar + shortestPathLength.toString();
         }
         catch (e) {
-            document.getElementById('notifier').innerHTML = 'No path';
-            setTimeout(function() {
-                document.getElementById('notifier').innerHTML = '';
-            }, 2000)
+            console.log(e);
+            if (e instanceof jsnx.JSNetworkXNoPath) {
+                document.getElementById('notifier').innerHTML = 'No path';
+                setTimeout(function() {
+                    document.getElementById('notifier').innerHTML = '';
+                }, 2000)
+            } else {
+                console.log(e);
+            }
         }
     }
     network.setOptions({physics: {
@@ -216,14 +223,36 @@ function initiateShortestPath(metric) {
     }})
 }
 
-function buildNetwork(e) {
-    var dataFile = e.target.files[0];
+function toggleManipulation() {
+    MANIPULATION_ENABLED = !MANIPULATION_ENABLED
+    network.setOptions({
+        manipulation: {
+            enabled: MANIPULATION_ENABLED,
+            addNode: function(nodeData, callback) {
+                console.log('here');
+                nodeData.icon = {
+                    face: 'FontAwesome',
+                    code: getIconFromName('Part'),
+                    color: DEFAULT_NODE_COLOR,
+                    size: DEFAULT_NODE_SIZE
+                };
+                callback(nodeData);
+            }
+        }
+    })
+}
+
+function buildNetwork() {
+    var dataFile = document.getElementById('file-input').files[0];
     var reader = new FileReader();
+
+    var dataSet = document.querySelector('input[name="dataset"]:checked').value;
+
     reader.onload = function(e) {
         var data = e.target.result;
         var workbook = XLSX.read(data, {type : 'binary'});
-        var edgeSheet  = workbook.Sheets['Cereal_LL'];
-        var attributeSheet  = workbook.Sheets['Cereal_SD'];
+        var edgeSheet  = workbook.Sheets[dataSet + '_LL'];
+        var attributeSheet  = workbook.Sheets[dataSet + '_SD'];
         var edgeSheetRows = XLSX.utils.sheet_to_row_object_array(edgeSheet);
         attributeDict = XLSX.utils.sheet_to_json(attributeSheet);
 
