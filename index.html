@@ -31,9 +31,39 @@
 
     <body>
 
+        <div id="app-header">
+            <h2>Supply Chain Analysis</h2>
+            <p><i>By Keval Khara and Chandler Squires</i></p>
+        </div>
+
         <div id="visualization"></div>
-        <i><h1 id="notifier" style="width:100%; height:50px; text-align:center"></h1></i>
+        <h1 id="notifier" style="width:100%; height:50px; text-align:center"></h1>
         <script type="text/javascript" src="test.js"></script>
+
+
+
+        </br>
+        <div class="controls">
+            <p style="width:100%; text-align:center">Color Nodes by: </p>
+            <button id="color-degree" style="width:100%" onclick="colorByDegree()">Degree</button>
+            </br>
+            <button class="button-selected" id="color-none" style="width:100%" onclick="removeColors()">None</button>
+        </div>
+        <div class="controls">
+            <p style="width:100%; text-align:center">Size Nodes by: </p>
+            <button id="size-cost" style="width:100%" onclick="sizeByCost()">Cost</button>
+            </br>
+            <button id="size-time" style="width:100%" onclick="sizeByTime()">Time</button>
+            </br>
+            <button class="button-selected" id="size-none" style="width:100%" onclick="removeSizes()">None</button>
+        </div>
+        <div class="controls">
+            <p style="width:100%; text-align:center">Analytics</p>
+            <button style="width:100%" onclick="initiateShortestPath('cost')">Shortest Path (Cost)</button>
+            <button style="width:100%" onclick="initiateShortestPath('time')">Shortest Path (Time)</button>
+            <button style="width:100%" onclick="initiateDescendants()">Descendants</button>
+            <button style="width:100%" onclick="initiateAncestors()">Ancestors</button>
+        </div>
 
         <input id="file-input" type="file" onchange="buildNetwork()">
         </br>
@@ -48,29 +78,6 @@
             <!--<input type="radio" id="datasetAircraft" name="dataset" value="Aircraft">-->
             <!--<label for="datasetAircraft">Aircraft</label>-->
         </form>
-
-        </br>
-        <div style="width:200px; float:left">
-            <p style="width:100%; text-align:center">Color Nodes by: </p>
-            <button style="width:100%" onclick="colorByDegree()">Degree</button>
-            </br>
-            <button style="width:100%" onclick="removeColors()">None</button>
-        </div>
-        <div style="width:200px; float:left">
-            <p style="width:100%; text-align:center">Size Nodes by: </p>
-            <button style="width:100%" onclick="sizeByCost()">Cost</button>
-            </br>
-            <button style="width:100%" onclick="sizeByTime()">Time</button>
-            </br>
-            <button style="width:100%" onclick="removeSizes()">None</button>
-        </div>
-        <div style="width:200px; float:left">
-            <p style="width:100%; text-align:center">Analytics</p>
-            <button style="width:100%" onclick="initiateShortestPath('cost')">Shortest Path (Cost)</button>
-            <button style="width:100%" onclick="initiateShortestPath('time')">Shortest Path (Time)</button>
-            <button style="width:100%" onclick="initiateDescendants()">Descendants</button>
-            <button style="width:100%" onclick="initiateAncestors()">Ancestors</button>
-        </div>
 
         <div id="network-popUp">
             <b>Choose node type:</b>
