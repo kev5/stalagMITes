@@ -97,11 +97,23 @@ function sizeByCost() {
     nodesSet.forEach(function(n) {
         var size = MIN_NODE_SIZE + costs[n]/max_cost*(MAX_NODE_SIZE - MIN_NODE_SIZE);
         nodesDataSet.update({id: n, icon: {size: size}})
-    });
+    })
 }
 
 function sizeByTime() {
-
+    var times = {};
+    var max_time = 0;
+    nodesSet.forEach(function(n) {
+        var time = parseFloat(attributeDict[stageNamesToIndex[n]]['stageTime'].substring(1));
+        times[n] = time;
+        if (time > max_time) {
+            max_time = time;
+        }
+    });
+    nodesSet.forEach(function(n) {
+        var size = MIN_NODE_SIZE + times[n]/max_time*(MAX_NODE_SIZE - MIN_NODE_SIZE);
+        nodesDataSet.update({id: n, icon: {size: size}})
+    });
 }
 
 function removeSizes() {
@@ -131,7 +143,7 @@ function initiateShortestPath() {
         });
     }
     network.setOptions({physics: {
-        enabled: true
+        enabled: false
     }})
 }
 
@@ -226,4 +238,3 @@ function buildNetwork(e) {
 window.onload = function() {
     document.getElementById('file-input').addEventListener('change', buildNetwork);
 };
-
