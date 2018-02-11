@@ -63,13 +63,14 @@
             <p style="width:100%; text-align:center">Analytics</p>
             <button style="width:100%" onclick="initiateShortestPath('cost')">Shortest Path (Cost)</button>
             <button style="width:100%" onclick="initiateShortestPath('time')">Shortest Path (Time)</button>
+            <button style="width:100%" onclick="initiateDescendants()">Descendants</button>
         </div>
 
         <div id="network-popUp">
             <b>Choose node type:</b>
             <form id="new-node-type-selector">
                 <input type="radio" id="new-part" name="new-node-type" value="Part" checked="checked">
-                <label for="new-part">Part <i class="fa fa-wrench"></i></label>
+                <label for="new-part">Part <i class="fa fa-cog"></i></label>
                 </br>
                 <input type="radio" id="new-manuf" name="new-node-type" value="Manuf">
                 <label for="new-manuf">Manufacturing <i class="fa fa-industry"></i></label>
@@ -83,10 +84,18 @@
                 <input type="radio" id="new-trans" name="new-node-type" value="Trans">
                 <label for="new-trans">Transportation <i class="fa fa-truck"></i></label>
             </form>
-            Node Cost ($): <input type="number" id="new-node-cost" value="1"/>
-            </br>
-            Node Time: <input type="number" id="new-node-time" value="20"/>
-            </br>
+
+            <form>
+                <div>
+                    <label for="new-node-cost">Node Code ($):</label>
+                    <input type="number" id="new-node-cost" value="1">
+                </div>
+                <div>
+                    <label for="new-node-time">Node Time:</label>
+                    <input type="number" id="new-node-time" value="20"/>
+                </div>
+            </form>
+
             <input type="button" value="save" id="saveButton" />
             <input type="button" value="cancel" id="cancelButton" />
         </div>

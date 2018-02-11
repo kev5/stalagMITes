@@ -8,6 +8,7 @@ var DEFAULT_EDGE_WIDTH = 1;
 var MAX_NODE_SIZE = 100;
 var DEFAULT_NODE_SIZE = 50;
 var MIN_NODE_SIZE = 25;
+var HIGHLIGHT_EDGE_WIDTH = 8;
 var NEW_NODE_COLOR = 'blue';
 var stageNamesToIndex = {};
 var maxByType = {
@@ -19,17 +20,70 @@ var maxByType = {
 };
 
 function getIconFromName(n) {
-    if (n.startsWith('Part')) {return '\uf0ad'}
+    if (n.startsWith('Part')) {return '\uf013'}
     if (n.startsWith('Manuf')) {return '\uf275'}
     if (n.startsWith('Dist')) {return '\uf06b'}
     if (n.startsWith('Retail')) {return '\uf07a'}
     if (n.startsWith('Trans')) {return '\uf0d1'}
 }
 
+function notify(msg) {
+    document.getElementById('notifier').innerHTML = msg;
+}
+
+function getDescendants(n) {
+    var successors = nx_graph.successors(n);
+    var descendants = successors;
+    var descendantEdges = [];
+
+    successors.forEach(function(s) {
+        descendantEdges.push(n + '-' + s);
+        sDesc = getDescendants(s);
+        descendants = descendants.concat(sDesc['nodes']);
+        descendantEdges = descendantEdges.concat(sDesc['edges']);
+    });
+    return {
+        nodes: descendants,
+        edges: descendantEdges
+    };
+}
+
 function rgba2str(rgba) {
     rgba = rgba['_rgb'];
     var res =  'rgba(' + rgba[0] + ',' + rgba[1] + ',' + rgba[2] + ',' + rgba[3] + ')';
     return res;
+}
+
+function initiateDescendants() {
+    restoreDefault();
+    var nodes = network.getSelectedNodes();
+    deselectNodes();
+    if (nodes.length === 1) {
+        var descendants = getDescendants(nodes[0]);
+        nodesDataSet.update({
+            id: nodes[0],
+            icon: {
+                color: 'blue'
+            }
+        });
+        descendants['nodes'].forEach(function(n) {
+            nodesDataSet.update({
+                id: n,
+                icon: {
+                    color: 'blue'
+                }
+            })
+        });
+        descendants['edges'].forEach(function(e) {
+            edgesDataSet.update({
+                id: e,
+                color: 'blue',
+                width: HIGHLIGHT_EDGE_WIDTH
+            })
+        })
+    } else {
+        notify('Must have one node selected');
+    }
 }
 
 // function addNode() {
@@ -201,7 +255,7 @@ function initiateShortestPath(metric) {
                         color: 'blue',
                         highlight: 'blue',
                     },
-                    width: 8
+                    width: HIGHLIGHT_EDGE_WIDTH
                 });
                 network.stabilize();
             }
