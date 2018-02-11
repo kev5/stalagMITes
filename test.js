@@ -48,11 +48,29 @@ function getDescendants(n) {
     };
 }
 
-function rgba2str(rgba) {
-    rgba = rgba['_rgb'];
-    var res =  'rgba(' + rgba[0] + ',' + rgba[1] + ',' + rgba[2] + ',' + rgba[3] + ')';
-    return res;
+function getAncestors(n) {
+    var predecessors = nx_graph.predecessors(n);
+    var ancestors = predecessors;
+    var ancestorEdges = [];
+
+    predecessors.forEach(function(p) {
+        ancestorEdges.push(p + '-' + n);
+        sAnc = getAncestors(p);
+        ancestors = ancestors.concat(sAnc['nodes']);
+        ancestorEdges = ancestorEdges.concat(sAnc['edges']);
+    });
+    return {
+        nodes: ancestors,
+        edges: ancestorEdges
+    };
 }
+
+
+// function rgba2str(rgba) {
+//     rgba = rgba['_rgb'];
+//     var res =  'rgba(' + rgba[0] + ',' + rgba[1] + ',' + rgba[2] + ',' + rgba[3] + ')';
+//     return res;
+// }
 
 function initiateDescendants() {
     restoreDefault();
@@ -86,57 +104,40 @@ function initiateDescendants() {
     }
 }
 
-// function addNode() {
-//     var newId = (Math.random() * 1e7).toString(32);
-//     nodes.add({id:newId, label:"I'm new!"});
-//     nodeIds.push(newId);
-// }
-//
-// function changeNode1() {
-//     var newColor = '#' + Math.floor((Math.random() * 255 * 255 * 255)).toString(16);
-//     nodes.update([{id:1, color:{background:newColor}}]);
-// }
-//
-// function removeRandomNode() {
-//     var randomNodeId = nodeIds[Math.floor(Math.random() * nodeIds.length)];
-//     nodes.remove({id:randomNodeId});
-//     var index = nodeIds.indexOf(randomNodeId);
-//     nodeIds.splice(index,1);
-// }
-//
-// function changeOptions() {
-//     shadowState = !shadowState;
-//     network.setOptions({nodes:{shadow:shadowState},edges:{shadow:shadowState}});
-// }
-//
-// function resetAllNodes() {
-//     nodes.clear();
-//     edges.clear();
-//     nodes.add(nodesArray);
-//     edges.add(edgesArray);
-// }
-//
-// function resetAllNodesStabilize() {
-//     resetAllNodes();
-//     network.stabilize();
-// }
-//
-// function setTheData() {
-//     nodes = new vis.DataSet(nodesArray);
-//     edges = new vis.DataSet(edgesArray);
-//     network.setData({nodes:nodes, edges:edges})
-// }
-//
-// function resetAll() {
-//     if (network !== null) {
-//         network.destroy();
-//         network = null;
-//     }
-//     startNetwork();
-// }
+function initiateAncestors() {
+    restoreDefault();
+    var nodes = network.getSelectedNodes();
+    deselectNodes();
+    if (nodes.length === 1) {
+        var ancestors = getAncestors(nodes[0]);
+        nodesDataSet.update({
+            id: nodes[0],
+            icon: {
+                color: 'blue'
+            }
+        });
+        ancestors['nodes'].forEach(function(n) {
+            nodesDataSet.update({
+                id: n,
+                icon: {
+                    color: 'blue'
+                }
+            })
+        });
+        ancestors['edges'].forEach(function(e) {
+            edgesDataSet.update({
+                id: e,
+                color: 'blue',
+                width: HIGHLIGHT_EDGE_WIDTH
+            })
+        })
+    } else {
+        notify('Must have one node selected');
+    }
+}
 
 function colorByDegree() {
-    restoreDefault();
+    restoreDefaultsEdge();
     var degrees = nx_graph.degree()._stringValues;
     var maxDegree = _.max(Object.values(degrees));
     nodesSet.forEach(function(n) {
@@ -194,18 +195,7 @@ function deselectNodes() {
     });
 }
 
-function restoreDefault() {
-    document.getElementById('notifier').innerHTML = '';
-
-    nodesSet.forEach(function(n) {
-        nodesDataSet.update({
-            id: n,
-            icon: {
-                color: DEFAULT_NODE_COLOR,
-                size: DEFAULT_NODE_SIZE
-            }
-        })
-    });
+function restoreDefaultsEdge() {
     edgesArray.forEach(function(e) {
         edgesDataSet.update({
             id: e['id'],
@@ -218,19 +208,37 @@ function restoreDefault() {
     })
 }
 
-function initiateAllPaths() {
-    restoreDefault();
-    var nodes = network.getSelectedNodes();
-    if (nodes.length != 2) {
-        document.getElementById('notifier').innerHTML = 'Must have two nodes selected'
-    } else {
-        try {
-            var allPaths = jsnx.allPaths()
-        } catch (e) {
-
-        }
-    }
+function restoreDefaultsNode() {
+    nodesSet.forEach(function(n) {
+        nodesDataSet.update({
+            id: n,
+            icon: {
+                color: DEFAULT_NODE_COLOR,
+                size: DEFAULT_NODE_SIZE
+            }
+        })
+    });
 }
+
+function restoreDefault() {
+    document.getElementById('notifier').innerHTML = '';
+    restoreDefaultsEdge();
+    restoreDefaultsNode();
+}
+
+// function initiateAllPaths() {
+//     restoreDefault();
+//     var nodes = network.getSelectedNodes();
+//     if (nodes.length != 2) {
+//         document.getElementById('notifier').innerHTML = 'Must have two nodes selected'
+//     } else {
+//         try {
+//             var allPaths = jsnx.allPaths()
+//         } catch (e) {
+//
+//         }
+//     }
+// }
 
 function initiateShortestPath(metric) {
     restoreDefault();
