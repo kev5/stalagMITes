@@ -100,11 +100,23 @@ function sizeByCost() {
     nodesSet.forEach(function(n) {
         var size = MIN_NODE_SIZE + costs[n]/max_cost*(MAX_NODE_SIZE - MIN_NODE_SIZE);
         nodesDataSet.update({id: n, icon: {size: size}})
-    });
+    })
 }
 
 function sizeByTime() {
-
+    var times = {};
+    var max_time = 0;
+    nodesSet.forEach(function(n) {
+        var time = parseFloat(attributeDict[stageNamesToIndex[n]]['stageTime']);
+        times[n] = time;
+        if (time > max_time) {
+            max_time = time;
+        }
+    });
+    nodesSet.forEach(function(n) {
+        var size = MIN_NODE_SIZE + times[n]/max_time*(MAX_NODE_SIZE - MIN_NODE_SIZE);
+        nodesDataSet.update({id: n, icon: {size: size}})
+    });
 }
 
 function removeSizes() {
@@ -113,7 +125,15 @@ function removeSizes() {
     })
 }
 
+function deselectNodes() {
+    network.setSelection({
+        nodes: []
+    });
+}
+
 function restoreDefault() {
+    document.getElementById('notifier').innerHTML = '';
+
     nodesSet.forEach(function(n) {
         nodesDataSet.update({
             id: n,
@@ -122,7 +142,7 @@ function restoreDefault() {
                 size: DEFAULT_NODE_SIZE
             }
         })
-    })
+    });
     edgesArray.forEach(function(e) {
         edgesDataSet.update({
             id: e['id'],
@@ -135,7 +155,21 @@ function restoreDefault() {
     })
 }
 
-function initiateShortestPath() {
+function initiateAllPaths() {
+    restoreDefault();
+    var nodes = network.getSelectedNodes();
+    if (nodes.length != 2) {
+        document.getElementById('notifier').innerHTML = 'Must have two nodes selected'
+    } else {
+        try {
+            var allPaths = jsnx.allPaths()
+        } catch (e) {
+
+        }
+    }
+}
+
+function initiateShortestPath(metric) {
     restoreDefault();
     // network.setOptions({physics: {
     //     enabled: false
@@ -143,16 +177,16 @@ function initiateShortestPath() {
 
     // document.getElementById('notifier').innerHTML = 'Choose source'
     var nodes = network.getSelectedNodes();
+    deselectNodes();
     if (nodes.length != 2) {
         document.getElementById('notifier').innerHTML = 'Must have two nodes selected'
-    }
-    else {
+    } else {
         try {
-            var shortestPath = jsnx.bidirectionalShortestPath(nx_graph, nodes[0], nodes[1], weight='cost');
+            var shortestPath = jsnx.bidirectionalShortestPath(nx_graph, nodes[0], nodes[1], 'cost');
             shortestPath.forEach(function (n) {
                 nodesDataSet.update({
                     id: n,
-                    icon: {color: 'red'},
+                    icon: {color: 'red'}
                 })
             });
             for (var i = 0; i < shortestPath.length; i++) {
@@ -164,11 +198,11 @@ function initiateShortestPath() {
                     },
                     width: 8
                 });
-                network.stabilize()
+                network.stabilize();
             }
-            network.setSelection({
-                nodes: []
-            })
+
+            var shortestPathLength = _.sum(shortestPath.map(function(n) {return nx_graph.node.get(n)[metric]}));
+            document.getElementById('notifier').innerHTML = metric + ' = ' + shortestPathLength.toString();
         }
         catch (e) {
             document.getElementById('notifier').innerHTML = 'No path';
@@ -177,10 +211,9 @@ function initiateShortestPath() {
             }, 2000)
         }
     }
-
-    // network.setOptions({physics: {
-    //     enabled: true
-    // }})
+    network.setOptions({physics: {
+        enabled: true
+    }})
 }
 
 function buildNetwork(e) {
@@ -216,7 +249,7 @@ function buildNetwork(e) {
                     color: DEFAULT_EDGE_COLOR,
                     highlight: HIGHLIGHT_EDGE_COLOR
                 },
-                width: DEFAULT_EDGE_WIDTH
+                width: DEFAULT_EDGE_WIDTH,
             };
         });
 
@@ -224,11 +257,14 @@ function buildNetwork(e) {
         nx_graph = new jsnx.DiGraph();
         nodesSet.forEach(function(n) {
             var cost = parseFloat(attributeDict[stageNamesToIndex[n]]['stageCost'].substring(1));
-            console.log(cost);
-            nx_graph.addNode(n, {cost: cost});
+            var time = parseFloat(attributeDict[stageNamesToIndex[n]]['stageTime']);
+            nx_graph.addNode(n, {cost: cost, time: time});
         });
         edgesArray.forEach(function(e) {
-            nx_graph.addEdge(e['from'], e['to']);
+            var n = e['from'];
+            var cost = parseFloat(attributeDict[stageNamesToIndex[n]]['stageCost'].substring(1));
+            var time = parseFloat(attributeDict[stageNamesToIndex[n]]['stageTime']);
+            nx_graph.addEdge(e['from'], e['to'], {cost: cost, time: time});
         });
         window.nx_graph = nx_graph;
 
@@ -277,4 +313,3 @@ function buildNetwork(e) {
 window.onload = function() {
     document.getElementById('file-input').addEventListener('change', buildNetwork);
 };
-
