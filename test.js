@@ -18,6 +18,11 @@ var maxByType = {
     'Retail': 0,
     'Trans': 0
 };
+var colorButtonDegree = document.getElementById('color-degree');
+var colorButtonNone = document.getElementById('color-none');
+var sizeButtonCost = document.getElementById('size-cost');
+var sizeButtonTime = document.getElementById('size-time');
+var sizeButtonNone = document.getElementById('size-none');
 
 function getIconFromName(n) {
     if (n.startsWith('Part')) {return '\uf013'}
@@ -139,7 +144,9 @@ function initiateAncestors() {
 
         var totalCost = _.sum(ancestors['nodes'].map(function(n) {return nx_graph.node.get(n)['cost']}));
         totalCost += nx_graph.node.get(nodes[0])['cost'];
-        notify('Total cost: $' + totalCost.toFixed(2), true);
+        var totalTime = _.sum(ancestors['nodes'].map(function(n) {return nx_graph.node.get(n)['time']}));
+        totalCost += nx_graph.node.get(nodes[0])['time'];
+        notify('Total cost: $' + totalCost.toFixed(2) + ', total time: ' + totalTime.toString(), true);
     } else {
         notify('Must have one node selected');
     }
@@ -151,13 +158,17 @@ function colorByDegree() {
     var maxDegree = _.max(Object.values(degrees));
     nodesSet.forEach(function(n) {
         nodesDataSet.update({id: n, icon:{color: colormap(degrees[n]/maxDegree)}})
-    })
+    });
+    colorButtonDegree.classList.add('button-selected');
+    colorButtonNone.classList.remove('button-selected');
 }
 
 function removeColors() {
     nodesSet.forEach(function(n) {
         nodesDataSet.update({id: n, icon: {color: DEFAULT_NODE_COLOR}})
-    })
+    });
+    colorButtonDegree.classList.remove('button-selected');
+    colorButtonNone.classList.add('button-selected');
 }
 
 function sizeByCost() {
@@ -173,7 +184,10 @@ function sizeByCost() {
     nodesSet.forEach(function(n) {
         var size = MIN_NODE_SIZE + costs[n]/max_cost*(MAX_NODE_SIZE - MIN_NODE_SIZE);
         nodesDataSet.update({id: n, icon: {size: size}})
-    })
+    });
+    sizeButtonCost.classList.add('button-selected');
+    sizeButtonTime.classList.remove('button-selected');
+    sizeButtonNone.classList.remove('button-selected');
 }
 
 function sizeByTime() {
@@ -190,12 +204,18 @@ function sizeByTime() {
         var size = MIN_NODE_SIZE + times[n]/max_time*(MAX_NODE_SIZE - MIN_NODE_SIZE);
         nodesDataSet.update({id: n, icon: {size: size}})
     });
+    sizeButtonCost.classList.remove('button-selected');
+    sizeButtonTime.classList.add('button-selected');
+    sizeButtonNone.classList.remove('button-selected');
 }
 
 function removeSizes() {
     nodesSet.forEach(function(n) {
         nodesDataSet.update({id: n, icon: {size: DEFAULT_NODE_SIZE}});
-    })
+    });
+    sizeButtonCost.classList.remove('button-selected');
+    sizeButtonTime.classList.remove('button-selected');
+    sizeButtonNone.classList.add('button-selected');
 }
 
 function deselectNodes() {
