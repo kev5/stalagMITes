@@ -1,10 +1,16 @@
 #visualization {
     height: 600px;
-<<<<<<< HEAD
     width: 100%;
-=======
-    width: 1200px;
->>>>>>> 5cd915f8d021fc97e1d4b7048b60c72b8396a1ce
+    border-style: solid;
+}
+
+#app-header {
+    text-align: center;
+    background-color: #222;
+    height: 100px;
+    width: 100%;
+    color: white;
+    border: solid black;
 }
 
 #network-popUp {
@@ -24,8 +30,28 @@
 
 #new-node-type-selector {
     text-align: left;
-<<<<<<< HEAD
 }
-=======
+
+.button-selected {
+    color: red;
 }
->>>>>>> 5cd915f8d021fc97e1d4b7048b60c72b8396a1ce
+
+#notifier {
+    color: red;
+    margin: 0;
+}
+
+.controls {
+    float: left;
+    width: 33%;
+}
+
+.controls>p {
+    font-weight: bold;
+    font-size: 20px;
+    margin: 0;
+}
+
+.controls>button {
+    font-size: 16px;
+}
