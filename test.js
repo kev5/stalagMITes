@@ -1,7 +1,11 @@
-var nodesSet, nodesArray, nodesDataSet, edgesArray, edgesDataSet, network, nx_graph;
+var nodesSet, nodesArray, nodesDataSet, edgesArray, edgesDataSet, network, nx_graph, attributeDict;
 var container = document.getElementById('visualization');
 var colormap = chroma.scale(['green', 'yellow', 'red']);
 var DEFAULT_NODE_COLOR = 'black';
+var MAX_NODE_SIZE = 100;
+var DEFAULT_NODE_SIZE = 50;
+var MIN_NODE_SIZE = 25;
+var stageNamesToIndex = {};
 
 function getIconFromName(n) {
     if (n.startsWith('Part')) {return '\uf0ad'}
@@ -80,6 +84,32 @@ function removeColors() {
     })
 }
 
+function sizeByCost() {
+    var costs = {};
+    var max_cost = 0;
+    nodesSet.forEach(function(n) {
+        var cost = parseFloat(attributeDict[stageNamesToIndex[n]]['stageCost'].substring(1));
+        costs[n] = cost;
+        if (cost > max_cost) {
+            max_cost = cost;
+        }
+    });
+    nodesSet.forEach(function(n) {
+        var size = MIN_NODE_SIZE + costs[n]/max_cost*(MAX_NODE_SIZE - MIN_NODE_SIZE);
+        nodesDataSet.update({id: n, icon: {size: size}})
+    });
+}
+
+function sizeByTime() {
+
+}
+
+function removeSizes() {
+    nodesSet.forEach(function(n) {
+        nodesDataSet.update({id: n, icon: {size: DEFAULT_NODE_SIZE}});
+    })
+}
+
 function buildNetwork(e) {
     var dataFile = e.target.files[0];
     var reader = new FileReader();
@@ -87,8 +117,14 @@ function buildNetwork(e) {
         var data = e.target.result;
         var workbook = XLSX.read(data, {type : 'binary'});
         var edgeSheet  = workbook.Sheets['Cereal_LL'];
-        // var attributeSheet  = workbook.Sheets['Cereal_'];
+        var attributeSheet  = workbook.Sheets['Cereal_SD'];
         var edgeSheetRows = XLSX.utils.sheet_to_row_object_array(edgeSheet);
+        attributeDict = XLSX.utils.sheet_to_json(attributeSheet);
+
+        attributeDict.forEach(function(entry, i) {
+            stageNamesToIndex[entry['Stage Name']] = i;
+        });
+
 
         nodesSet = new Set();
         edgeSheetRows.forEach(function(e) {
@@ -128,7 +164,8 @@ function buildNetwork(e) {
                 icon: {
                     face: 'FontAwesome',
                     code: getIconFromName(n),
-                    color: DEFAULT_NODE_COLOR
+                    color: DEFAULT_NODE_COLOR,
+                    size: DEFAULT_NODE_SIZE
                 },
                 shape: 'icon'
             })
