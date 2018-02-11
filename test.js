@@ -111,13 +111,28 @@ function removeSizes() {
 }
 
 function initiateShortestPath() {
+    network.setOptions({physics: {
+        enabled: false
+    }});
+
     // document.getElementById('notifier').innerHTML = 'Choose source'
     var nodes = network.getSelectedNodes();
     var shortestPath = jsnx.bidirectionalShortestPath(nx_graph, nodes[0], nodes[1]);
     shortestPath.forEach(function(n) {
-        console.log(n);
         nodesDataSet.update({id: n, icon: {color: 'red'}})
     });
+    for (var i=0; i < shortestPath.length; i++) {
+        edgesDataSet.update({
+            id: shortestPath[i] + '-' + shortestPath[i+1],
+            color: {
+                color: 'red',
+                highlight: 'red'
+            }
+        });
+    }
+    network.setOptions({physics: {
+        enabled: true
+    }})
 }
 
 function buildNetwork(e) {
@@ -143,6 +158,7 @@ function buildNetwork(e) {
         });
         edgesArray = edgeSheetRows.map(function(e) {
             return {
+                id: e['sourceStage'] + '-' + e['destinationStage'],
                 from: e['sourceStage'],
                 to: e['destinationStage'],
                 arrows: {
