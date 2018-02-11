@@ -1,6 +1,10 @@
 #visualization {
     height: 600px;
+<<<<<<< HEAD
     width: 100%;
+=======
+    width: 1200px;
+>>>>>>> 5cd915f8d021fc97e1d4b7048b60c72b8396a1ce
 }
 
 #network-popUp {
@@ -20,4 +24,8 @@
 
 #new-node-type-selector {
     text-align: left;
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 5cd915f8d021fc97e1d4b7048b60c72b8396a1ce

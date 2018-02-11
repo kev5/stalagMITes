@@ -29,9 +29,12 @@ function getIconFromName(n) {
 
 function notify(msg) {
     document.getElementById('notifier').innerHTML = msg;
+<<<<<<< HEAD
     setTimeout(function() {
         document.getElementById('notifier').innerHTML = '';
     }, 2000)
+=======
+>>>>>>> 5cd915f8d021fc97e1d4b7048b60c72b8396a1ce
 }
 
 function getDescendants(n) {
@@ -113,7 +116,10 @@ function initiateAncestors() {
     deselectNodes();
     if (nodes.length === 1) {
         var ancestors = getAncestors(nodes[0]);
+<<<<<<< HEAD
         console.log(ancestors);
+=======
+>>>>>>> 5cd915f8d021fc97e1d4b7048b60c72b8396a1ce
         nodesDataSet.update({
             id: nodes[0],
             icon: {
@@ -134,11 +140,15 @@ function initiateAncestors() {
                 color: 'blue',
                 width: HIGHLIGHT_EDGE_WIDTH
             })
+<<<<<<< HEAD
         });
 
         var totalCost = _.sum(ancestors['nodes'].map(function(n) {return nx_graph.node.get(n)['cost']}));
         totalCost += nx_graph.node.get(nodes[0])['cost'];
         notify('Total cost: $' + totalCost);
+=======
+        })
+>>>>>>> 5cd915f8d021fc97e1d4b7048b60c72b8396a1ce
     } else {
         notify('Must have one node selected');
     }
@@ -428,9 +438,13 @@ function buildNetwork() {
                     color: DEFAULT_NODE_COLOR,
                     size: DEFAULT_NODE_SIZE
                 },
+<<<<<<< HEAD
                 shape: 'icon',
                 title: 'Cost = $' + parseFloat(attributeDict[stageNamesToIndex[n]]['stageCost'].substring(1)) + ', ' +
                     'time = ' + parseFloat(attributeDict[stageNamesToIndex[n]]['stageTime'])
+=======
+                shape: 'icon'
+>>>>>>> 5cd915f8d021fc97e1d4b7048b60c72b8396a1ce
             })
         });
         nodesSet.forEach(function(n) {
@@ -471,11 +485,14 @@ function buildNetwork() {
             }
         };
         network = new vis.Network(container, netData, options);
+<<<<<<< HEAD
         network.setOptions({
             interaction: {
                 hover: true
             }
         });
+=======
+>>>>>>> 5cd915f8d021fc97e1d4b7048b60c72b8396a1ce
         enableManipulation();
 
         // network.on('click', function(e) {
