@@ -2,6 +2,9 @@ var nodesSet, nodesArray, nodesDataSet, edgesArray, edgesDataSet, network, nx_gr
 var container = document.getElementById('visualization');
 var colormap = chroma.scale(['green', 'yellow', 'red']);
 var DEFAULT_NODE_COLOR = 'black';
+var DEFAULT_EDGE_COLOR = 'black';
+var HIGHLIGHT_EDGE_COLOR = 'red';
+var DEFAULT_EDGE_WIDTH = 1;
 var MAX_NODE_SIZE = 100;
 var DEFAULT_NODE_SIZE = 50;
 var MIN_NODE_SIZE = 25;
@@ -110,29 +113,74 @@ function removeSizes() {
     })
 }
 
+function restoreDefault() {
+    nodesSet.forEach(function(n) {
+        nodesDataSet.update({
+            id: n,
+            icon: {
+                color: DEFAULT_NODE_COLOR,
+                size: DEFAULT_NODE_SIZE
+            }
+        })
+    })
+    edgesArray.forEach(function(e) {
+        edgesDataSet.update({
+            id: e['id'],
+            color: {
+                color: DEFAULT_EDGE_COLOR,
+                highlight: HIGHLIGHT_EDGE_COLOR
+            },
+            width: DEFAULT_EDGE_WIDTH
+        })
+    })
+}
+
 function initiateShortestPath() {
-    network.setOptions({physics: {
-        enabled: false
-    }});
+    restoreDefault();
+    // network.setOptions({physics: {
+    //     enabled: false
+    // }});
 
     // document.getElementById('notifier').innerHTML = 'Choose source'
     var nodes = network.getSelectedNodes();
-    var shortestPath = jsnx.bidirectionalShortestPath(nx_graph, nodes[0], nodes[1]);
-    shortestPath.forEach(function(n) {
-        nodesDataSet.update({id: n, icon: {color: 'red'}})
-    });
-    for (var i=0; i < shortestPath.length; i++) {
-        edgesDataSet.update({
-            id: shortestPath[i] + '-' + shortestPath[i+1],
-            color: {
-                color: 'red',
-                highlight: 'red'
-            }
-        });
+    if (nodes.length != 2) {
+        document.getElementById('notifier').innerHTML = 'Must have two nodes selected'
     }
-    network.setOptions({physics: {
-        enabled: true
-    }})
+    else {
+        try {
+            var shortestPath = jsnx.bidirectionalShortestPath(nx_graph, nodes[0], nodes[1], weight='cost');
+            shortestPath.forEach(function (n) {
+                nodesDataSet.update({
+                    id: n,
+                    icon: {color: 'red'},
+                })
+            });
+            for (var i = 0; i < shortestPath.length; i++) {
+                edgesDataSet.update({
+                    id: shortestPath[i] + '-' + shortestPath[i + 1],
+                    color: {
+                        color: 'red',
+                        highlight: 'red',
+                    },
+                    width: 8
+                });
+                network.stabilize()
+            }
+            network.setSelection({
+                nodes: []
+            })
+        }
+        catch (e) {
+            document.getElementById('notifier').innerHTML = 'No path';
+            setTimeout(function() {
+                document.getElementById('notifier').innerHTML = '';
+            }, 2000)
+        }
+    }
+
+    // network.setOptions({physics: {
+    //     enabled: true
+    // }})
 }
 
 function buildNetwork(e) {
@@ -165,16 +213,19 @@ function buildNetwork(e) {
                     to: true
                 },
                 color: {
-                    color: 'black',
-                    highlight: 'red'
-                }
+                    color: DEFAULT_EDGE_COLOR,
+                    highlight: HIGHLIGHT_EDGE_COLOR
+                },
+                width: DEFAULT_EDGE_WIDTH
             };
         });
 
         // BUILD NETWORKX GRAPH
         nx_graph = new jsnx.DiGraph();
         nodesSet.forEach(function(n) {
-            nx_graph.addNode(n);
+            var cost = parseFloat(attributeDict[stageNamesToIndex[n]]['stageCost'].substring(1));
+            console.log(cost);
+            nx_graph.addNode(n, {cost: cost});
         });
         edgesArray.forEach(function(e) {
             nx_graph.addEdge(e['from'], e['to']);
