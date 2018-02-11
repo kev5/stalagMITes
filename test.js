@@ -27,14 +27,13 @@ function getIconFromName(n) {
     if (n.startsWith('Trans')) {return '\uf0d1'}
 }
 
-function notify(msg) {
+function notify(msg, persist) {
     document.getElementById('notifier').innerHTML = msg;
-<<<<<<< HEAD
-    setTimeout(function() {
-        document.getElementById('notifier').innerHTML = '';
-    }, 2000)
-=======
->>>>>>> 5cd915f8d021fc97e1d4b7048b60c72b8396a1ce
+    if (typeof(persist) === 'undefined' || !persist) {
+        setTimeout(function() {
+            document.getElementById('notifier').innerHTML = '';
+        }, 2000)
+    }
 }
 
 function getDescendants(n) {
@@ -116,10 +115,6 @@ function initiateAncestors() {
     deselectNodes();
     if (nodes.length === 1) {
         var ancestors = getAncestors(nodes[0]);
-<<<<<<< HEAD
-        console.log(ancestors);
-=======
->>>>>>> 5cd915f8d021fc97e1d4b7048b60c72b8396a1ce
         nodesDataSet.update({
             id: nodes[0],
             icon: {
@@ -140,15 +135,11 @@ function initiateAncestors() {
                 color: 'blue',
                 width: HIGHLIGHT_EDGE_WIDTH
             })
-<<<<<<< HEAD
         });
 
         var totalCost = _.sum(ancestors['nodes'].map(function(n) {return nx_graph.node.get(n)['cost']}));
         totalCost += nx_graph.node.get(nodes[0])['cost'];
-        notify('Total cost: $' + totalCost);
-=======
-        })
->>>>>>> 5cd915f8d021fc97e1d4b7048b60c72b8396a1ce
+        notify('Total cost: $' + totalCost.toFixed(2), true);
     } else {
         notify('Must have one node selected');
     }
@@ -264,7 +255,7 @@ function initiateShortestPath(metric) {
     deselectNodes();
 
     if (nodes.length !== 2) {
-        document.getElementById('notifier').innerHTML = 'Must have two nodes selected'
+        notify('Must have two nodes selected');
     } else {
         try {
             var shortestPath = jsnx.bidirectionalShortestPath(nx_graph, nodes[0], nodes[1], 'cost');
@@ -291,12 +282,8 @@ function initiateShortestPath(metric) {
             document.getElementById('notifier').innerHTML = metric + ' = ' + maybeDollar + shortestPathLength.toFixed(2);
         }
         catch (e) {
-            console.log(e);
             if (e instanceof jsnx.JSNetworkXNoPath) {
-                document.getElementById('notifier').innerHTML = 'No path';
-                setTimeout(function() {
-                    document.getElementById('notifier').innerHTML = '';
-                }, 2000)
+                notify('No path between nodes')
             } else {
                 console.log(e);
             }
@@ -438,13 +425,9 @@ function buildNetwork() {
                     color: DEFAULT_NODE_COLOR,
                     size: DEFAULT_NODE_SIZE
                 },
-<<<<<<< HEAD
                 shape: 'icon',
                 title: 'Cost = $' + parseFloat(attributeDict[stageNamesToIndex[n]]['stageCost'].substring(1)) + ', ' +
                     'time = ' + parseFloat(attributeDict[stageNamesToIndex[n]]['stageTime'])
-=======
-                shape: 'icon'
->>>>>>> 5cd915f8d021fc97e1d4b7048b60c72b8396a1ce
             })
         });
         nodesSet.forEach(function(n) {
@@ -485,14 +468,11 @@ function buildNetwork() {
             }
         };
         network = new vis.Network(container, netData, options);
-<<<<<<< HEAD
         network.setOptions({
             interaction: {
                 hover: true
             }
         });
-=======
->>>>>>> 5cd915f8d021fc97e1d4b7048b60c72b8396a1ce
         enableManipulation();
 
         // network.on('click', function(e) {
