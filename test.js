@@ -1,7 +1,6 @@
 var nodesSet, nodesArray, nodesDataSet, edgesArray, edgesDataSet, network, nx_graph, attributeDict;
 var container = document.getElementById('visualization');
 var colormap = chroma.scale(['green', 'yellow', 'red']);
-var MANIPULATION_ENABLED = false;
 var DEFAULT_NODE_COLOR = 'black';
 var DEFAULT_EDGE_COLOR = 'black';
 var HIGHLIGHT_EDGE_COLOR = 'red';
@@ -9,7 +8,15 @@ var DEFAULT_EDGE_WIDTH = 1;
 var MAX_NODE_SIZE = 100;
 var DEFAULT_NODE_SIZE = 50;
 var MIN_NODE_SIZE = 25;
+var NEW_NODE_COLOR = 'blue';
 var stageNamesToIndex = {};
+var maxByType = {
+    'Part': 0,
+    'Manuf': 0,
+    'Dist': 0,
+    'Retail': 0,
+    'Trans': 0
+};
 
 function getIconFromName(n) {
     if (n.startsWith('Part')) {return '\uf0ad'}
@@ -223,23 +230,55 @@ function initiateShortestPath(metric) {
     }})
 }
 
-function toggleManipulation() {
-    MANIPULATION_ENABLED = !MANIPULATION_ENABLED
+function enableManipulation() {
     network.setOptions({
         manipulation: {
-            enabled: MANIPULATION_ENABLED,
+            enabled: true,
             addNode: function(nodeData, callback) {
-                console.log('here');
-                nodeData.icon = {
-                    face: 'FontAwesome',
-                    code: getIconFromName('Part'),
-                    color: DEFAULT_NODE_COLOR,
-                    size: DEFAULT_NODE_SIZE
-                };
-                callback(nodeData);
+                document.getElementById('saveButton').onclick = saveNodeData.bind(this, nodeData, callback);
+                document.getElementById('cancelButton').onclick = clearPopUp.bind();
+                document.getElementById('network-popUp').style.display = 'block';
+            },
+            addEdge: function(edgeData, callback) {
+                var source = edgeData['from'];
+                var target = edgeData['to'];
+                var cost = nx_graph.node.get(source)['cost'];
+                var time = nx_graph.node.get(source)['time'];
+                nx_graph.addEdge(source, target, {cost: cost, time: time});
+                edgeData.id = source + '-' + target;
+                callback(edgeData);
             }
         }
     })
+}
+
+function clearPopUp() {
+    document.getElementById('saveButton').onclick = null;
+    document.getElementById('cancelButton').onclick = null;
+    document.getElementById('network-popUp').style.display = 'none';
+}
+
+function saveNodeData(nodeData, callback) {
+    // nodeData.label = document.getElementById('node-label').value;
+    var nodeType = document.querySelector('input[name="new-node-type"]:checked').value;
+    var label = nodeType + '_' + (maxByType[nodeType] + 1).toString();
+    maxByType[nodeType] += 1;
+    nodeData.label = label;
+    nodeData.id = label;
+
+    nodeData.icon = {
+        face: 'FontAwesome',
+        code: getIconFromName(nodeType),
+        color: NEW_NODE_COLOR,
+        size: DEFAULT_NODE_SIZE
+    };
+    nodeData.shape = 'icon';
+
+    var cost = document.getElementById('new-node-cost').value;
+    var time = document.getElementById('new-node-time').value;
+    nx_graph.addNode(label, {cost: cost, time: time});
+    clearPopUp();
+    callback(nodeData);
 }
 
 function buildNetwork() {
@@ -312,6 +351,14 @@ function buildNetwork() {
                 shape: 'icon'
             })
         });
+        nodesSet.forEach(function(n) {
+            var info = n.split('_');
+            var type = info[0];
+            var num = parseInt(info[1]);
+            if (num > maxByType[type]) {
+                maxByType[type] = num;
+            }
+        });
         nodesDataSet = new vis.DataSet(Array.from(nodesArray));
         edgesDataSet = new vis.DataSet(edgesArray);
 
@@ -331,6 +378,7 @@ function buildNetwork() {
             }
         };
         network = new vis.Network(container, netData, options);
+        enableManipulation();
 
         // network.on('click', function(e) {
         //     console.log(e);
