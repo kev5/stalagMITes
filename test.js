@@ -1,4 +1,4 @@
-var nodesSet, nodesArray, nodesDataSet, edgesArray, edgesDataSet, network, nx_graph, attributeDict;
+var nodesSet, nodesArray, nodesDataSet, edgesArray, edgesDataSet, network, nx_graph, attributeDict, workbook, edgeSheet, attributeSheet;
 var container = document.getElementById('visualization');
 var colormap = chroma.scale(['green', 'yellow', 'red']);
 var DEFAULT_NODE_COLOR = 'black';
@@ -82,6 +82,7 @@ function rgba2str(rgba) {
 // }
 
 function colorByDegree() {
+    restoreDefault();
     var degrees = nx_graph.degree()._stringValues;
     var maxDegree = _.max(Object.values(degrees));
     nodesSet.forEach(function(n) {
@@ -179,13 +180,9 @@ function initiateAllPaths() {
 
 function initiateShortestPath(metric) {
     restoreDefault();
-    // network.setOptions({physics: {
-    //     enabled: false
-    // }});
-
-    // document.getElementById('notifier').innerHTML = 'Choose source'
     var nodes = network.getSelectedNodes();
     deselectNodes();
+
     if (nodes.length !== 2) {
         document.getElementById('notifier').innerHTML = 'Must have two nodes selected'
     } else {
@@ -194,15 +191,15 @@ function initiateShortestPath(metric) {
             shortestPath.forEach(function (n) {
                 nodesDataSet.update({
                     id: n,
-                    icon: {color: 'red'}
+                    icon: {color: 'blue'}
                 })
             });
             for (var i = 0; i < shortestPath.length; i++) {
                 edgesDataSet.update({
                     id: shortestPath[i] + '-' + shortestPath[i + 1],
                     color: {
-                        color: 'red',
-                        highlight: 'red',
+                        color: 'blue',
+                        highlight: 'blue',
                     },
                     width: 8
                 });
@@ -211,7 +208,7 @@ function initiateShortestPath(metric) {
 
             var shortestPathLength = _.sum(shortestPath.map(function(n) {return nx_graph.node.get(n)[metric]}));
             var maybeDollar = metric === 'cost' ? '$' : '';
-            document.getElementById('notifier').innerHTML = metric + ' = ' + maybeDollar + shortestPathLength.toString();
+            document.getElementById('notifier').innerHTML = metric + ' = ' + maybeDollar + shortestPathLength.toFixed(2);
         }
         catch (e) {
             console.log(e);
@@ -225,8 +222,20 @@ function initiateShortestPath(metric) {
             }
         }
     }
+}
+
+function enablePhysics() {
+    console.log('enabling physics');
     network.setOptions({physics: {
         enabled: true
+    }})
+}
+
+function disablePhysics() {
+    console.log('disabling physics');
+
+    network.setOptions({physics: {
+        enabled: false
     }})
 }
 
@@ -265,6 +274,7 @@ function saveNodeData(nodeData, callback) {
     maxByType[nodeType] += 1;
     nodeData.label = label;
     nodeData.id = label;
+    nodesSet.add(label);
 
     nodeData.icon = {
         face: 'FontAwesome',
@@ -289,9 +299,9 @@ function buildNetwork() {
 
     reader.onload = function(e) {
         var data = e.target.result;
-        var workbook = XLSX.read(data, {type : 'binary'});
-        var edgeSheet  = workbook.Sheets[dataSet + '_LL'];
-        var attributeSheet  = workbook.Sheets[dataSet + '_SD'];
+        workbook = XLSX.read(data, {type : 'binary'});
+        edgeSheet  = workbook.Sheets[dataSet + '_LL'];
+        attributeSheet  = workbook.Sheets[dataSet + '_SD'];
         var edgeSheetRows = XLSX.utils.sheet_to_row_object_array(edgeSheet);
         attributeDict = XLSX.utils.sheet_to_json(attributeSheet);
 
@@ -366,13 +376,24 @@ function buildNetwork() {
             nodes: nodesDataSet,
             edges: edgesDataSet
         };
-        var options = {
-            layout: {
+        var layout;
+        if (dataSet === 'Computer') {
+            layout = {
+                hierarchical: {
+                    enabled: false
+                }
+            };
+            disablePhysics();
+        } else {
+            layout = {
                 hierarchical: {
                     enabled: true,
                     sortMethod: 'directed'
                 }
-            },
+            }
+        }
+        var options = {
+            layout: layout,
             interaction: {
                 multiselect: true
             }
