@@ -110,6 +110,16 @@ function removeSizes() {
     })
 }
 
+function initiateShortestPath() {
+    // document.getElementById('notifier').innerHTML = 'Choose source'
+    var nodes = network.getSelectedNodes();
+    var shortestPath = jsnx.bidirectionalShortestPath(nx_graph, nodes[0], nodes[1]);
+    shortestPath.forEach(function(n) {
+        console.log(n);
+        nodesDataSet.update({id: n, icon: {color: 'red'}})
+    });
+}
+
 function buildNetwork(e) {
     var dataFile = e.target.files[0];
     var reader = new FileReader();
@@ -183,9 +193,16 @@ function buildNetwork(e) {
                     enabled: true,
                     sortMethod: 'directed'
                 }
+            },
+            interaction: {
+                multiselect: true
             }
         };
         network = new vis.Network(container, netData, options);
+
+        // network.on('click', function(e) {
+        //     console.log(e);
+        // })
     };
     reader.readAsBinaryString(dataFile);
 }
